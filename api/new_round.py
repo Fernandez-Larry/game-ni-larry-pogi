@@ -1,5 +1,7 @@
 import random
 import json
+from http.server import BaseHTTPRequestHandler
+from urllib.parse import parse_qs, urlparse
 
 SYMBOLS = ["★", "●", "■", "▲", "♥", "✦"]
 COLORS = ["#ff4d4d", "#4d94ff", "#ffd24d", "#32c48d", "#cc5cff", "#ff7f3f"]
@@ -10,8 +12,6 @@ def make_round(difficulty: float) -> dict:
     grid_size = 16
     target_symbol = random.choice(SYMBOLS)
     target_color = random.choice(COLORS)
-    distractor_symbol = random.choice([s for s in SYMBOLS if s != target_symbol])
-    distractor_color = random.choice([c for c in COLORS if c != target_color])
 
     min_targets = 3
     extra_targets = int(max(0, difficulty - 1))
@@ -67,14 +67,22 @@ def make_round(difficulty: float) -> dict:
     }
 
 
-def handler(request):
-    query = request.args if hasattr(request, "args") else {}
-    difficulty_input = query.get("difficulty") or query.get("score") or "1"
-    try:
-        difficulty = float(difficulty_input)
-    except ValueError:
-        difficulty = 1.0
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        query = parse_qs(parsed.query)
+        difficulty_input = query.get("difficulty", [None])[0] or query.get("score", [None])[0] or "1"
+        try:
+            difficulty = float(difficulty_input)
+        except (TypeError, ValueError):
+            difficulty = 1.0
 
-    difficulty = max(1.0, min(difficulty, 8.0))
-    payload = make_round(difficulty)
-    return (json.dumps(payload), 200, {"Content-Type": "application/json"})
+        difficulty = max(1.0, min(difficulty, 8.0))
+        payload = make_round(difficulty)
+        body = json.dumps(payload).encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
