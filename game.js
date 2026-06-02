@@ -124,10 +124,11 @@ function updateHud() {
 
 function speak(text) {
 	if (!state.audioEnabled || !window.speechSynthesis) return;
+	// use a slower, clearer voice for young children
 	window.speechSynthesis.cancel();
 	const utterance = new SpeechSynthesisUtterance(text);
-	utterance.rate = 1.05;
-	utterance.pitch = 1.1;
+	utterance.rate = 0.85;
+	utterance.pitch = 1.0;
 	window.speechSynthesis.speak(utterance);
 }
 
@@ -164,48 +165,117 @@ function renderRound(round) {
 	state.timeLeft = round.time;
 	updateHud();
 	state.isPlaying = true;
-	gameContainer.innerHTML = `<div class="answer-grid"></div>`;
-	const answerGrid = gameContainer.querySelector(".answer-grid");
-	if (!answerGrid) return;
 
-	round.options.forEach((item) => {
-		const button = document.createElement("button");
-		button.className = "answer-button";
-		if (state.currentGame === "shapes") {
-			button.innerHTML = `
-				<div class="shape-card">
-					<div class="shape-icon" style="background:${item.color}; border-radius:${item.label === 'Square' ? '18px' : item.label === 'Circle' ? '50%' : item.label === 'Star' ? '20%' : '8px'};">${item.label === 'Star' ? '★' : ''}</div>
-					<div>${item.label}</div>
-				</div>`;
-			button.dataset.value = item.label;
+	// Build a play floor with a visible target area; items will be scattered freely (not boxed)
+	gameContainer.innerHTML = `<div class="play-floor" id="playFloor"><div class="target-area" id="targetArea"></div></div>`;
+	const floor = gameContainer.querySelector('#playFloor');
+	const targetEl = gameContainer.querySelector('#targetArea');
+	if (!floor || !targetEl) return;
+
+	// Render the target in the target area (large and clear)
+	if (state.currentGame === 'shapes') {
+		targetEl.innerHTML = `<div class="floating-shape" style="background:${round.target.color}; width:72px; height:72px; border-radius:${round.target.label === 'Square' ? '12px' : round.target.label === 'Circle' ? '50%' : round.target.label === 'Star' ? '20%' : '8px'}; display:grid; place-items:center; font-weight:900">${round.target.label === 'Star' ? '★' : ''}</div>`;
+	} else {
+		targetEl.textContent = String(round.target);
+	}
+
+	// Create floating items and scatter them randomly on the floor
+	const placedRects = [];
+	function doesOverlap(r) {
+		return placedRects.some(pr => !(r.right < pr.left || r.left > pr.right || r.bottom < pr.top || r.top > pr.bottom));
+	}
+
+	round.options.forEach((item, idx) => {
+		const el = document.createElement('div');
+		el.className = 'floating-item';
+		// color choices for variation
+		const palette = ['#ffec99','#ffd6a5','#caffbf','#9bf6ff','#ffd6e0','#bdb2ff'];
+		el.style.background = palette[idx % palette.length];
+		if (state.currentGame === 'shapes') {
+			el.innerHTML = `<div style="width:48px; height:48px; display:grid; place-items:center; border-radius:${item.label === 'Square' ? '8px' : item.label === 'Circle' ? '50%' : item.label === 'Star' ? '20%' : '6px'}; background:${item.color};">${item.label === 'Star' ? '★' : ''}</div>`;
+			el.dataset.value = JSON.stringify(item);
 		} else {
-			button.textContent = item;
-			button.dataset.value = item;
+			el.textContent = String(item);
+			el.dataset.value = JSON.stringify(item);
 		}
-		button.addEventListener("click", () => handleAnswer(item, round.target));
-		answerGrid.appendChild(button);
+		el.setAttribute('draggable','true');
+
+		// click handler
+		el.addEventListener('click', () => {
+			const parsed = JSON.parse(el.dataset.value);
+			handleAnswer(parsed, round.target);
+		});
+
+		// drag handlers
+		el.addEventListener('dragstart', (e) => {
+			e.dataTransfer.setData('text/plain', el.dataset.value);
+		});
+
+		floor.appendChild(el);
+
+		// position item (try to avoid overlaps)
+		const maxAttempts = 12;
+		let placed = false;
+		for (let attempt = 0; attempt < maxAttempts && !placed; attempt += 1) {
+			const fw = floor.clientWidth || floor.offsetWidth;
+			const fh = floor.clientHeight || floor.offsetHeight;
+			const ew = el.offsetWidth || 80;
+			const eh = el.offsetHeight || 80;
+			const left = Math.floor(Math.random() * Math.max(1, fw - ew - 24)) + 12;
+			const top = Math.floor(Math.random() * Math.max(1, fh - eh - 24)) + 12;
+			const rect = { left, top, right: left + ew, bottom: top + eh };
+			if (!doesOverlap(rect)) {
+				el.style.left = left + 'px';
+				el.style.top = top + 'px';
+				placedRects.push(rect);
+				placed = true;
+			}
+		}
+		if (!placed) { el.style.left = '24px'; el.style.top = (20 + idx * 60) + 'px'; }
 	});
 
-	const spokenTarget = state.currentGame === "shapes" ? `${round.target.label} ${round.target.color}` : round.target;
-	speak(`Tap the ${spokenTarget}`);
-	setStatus(`Tap the ${spokenTarget}`);
+	// enable drop on target area
+	targetEl.addEventListener('dragover', (e) => { e.preventDefault(); });
+	targetEl.addEventListener('drop', (e) => {
+		e.preventDefault();
+		const data = e.dataTransfer.getData('text/plain');
+		let parsed = null;
+		try { parsed = JSON.parse(data); } catch { parsed = data; }
+		handleAnswer(parsed, round.target);
+	});
+
+	// Prompt the child in a friendly way
+	let promptText = '';
+	if (state.currentGame === 'letters') promptText = `Can you pick the letter ${round.target}, kid?`;
+	else if (state.currentGame === 'numbers') promptText = `Can you pick the number ${round.target}, kid?`;
+	else promptText = `Can you pick the ${round.target.label}, kid?`;
+
+	speak(promptText);
+	setStatus(promptText);
 	startTimer(round.time);
 }
 
 function handleAnswer(selected, target) {
 	if (!state.isPlaying) return;
-	const correct = state.currentGame === "shapes"
-		? selected.label === target.label && selected.color === target.color
-		: selected === target;
+
+	function isEqual(a, b) {
+		if (typeof a === 'object' && typeof b === 'object') return JSON.stringify(a) === JSON.stringify(b);
+		return String(a) === String(b);
+	}
+
+	const correct = isEqual(selected, target);
 
 	if (correct) {
 		state.score += 1;
-		setStatus("Correct! Great job.", "success");
-		speak("Correct!");
-		nextRound();
+		const praises = ['Yeyy!', 'Amazing!', 'Great job!', 'Well done!', 'You did it!'];
+		const praise = praises[Math.floor(Math.random() * praises.length)];
+		setStatus('Correct! ' + praise, 'success');
+		speak(praise);
+		// small delay so praise is heard before next prompt
+		setTimeout(() => nextRound(), 700);
 	} else {
-		setStatus("Try again!", "danger");
-		speak("Try again.");
+		setStatus('Try again!', 'danger');
+		speak('Try again.');
 	}
 	updateHud();
 }
