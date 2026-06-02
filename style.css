@@ -29,8 +29,11 @@ html, body {
 
 body {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
   padding: 18px;
+  min-height: 100vh;
 }
 
 .hidden {
@@ -38,22 +41,19 @@ body {
 }
 
 .navbar {
-  width: min(100%, 880px);
+  width: 100%;
   margin-bottom: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 14px 20px;
-  border-radius: 22px;
-  background: rgba(16, 27, 43, 0.96);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-/* Keep navbar fixed/sticky at the top so it stays across widths */
-.navbar {
+  padding: 12px 20px;
+  border-radius: 0;
+  background: rgba(16, 27, 43, 0.98);
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   position: sticky;
-  top: 12px;
+  top: 0;
   z-index: 60;
 }
 
@@ -67,10 +67,6 @@ body {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-/* Force horizontal nav so it stays at top instead of stacking to the side */
-.nav-links {
   flex-direction: row;
   align-items: center;
 }
