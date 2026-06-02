@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rush Tiles - Python Web Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Rush Tiles</h1>
+        <p class="tagline">Tap the target tiles. Fast, random, addictive.</p>
+      </div>
+      <div class="score-panel">
+        <div>Score <span id="score">0</span></div>
+        <div>High Score <span id="highScore">0</span></div>
+      </div>
+    </header>
+
+    <section class="status-row">
+      <div class="status-card">
+        <strong id="targetLabel">Target:</strong>
+        <span id="targetSymbol">-</span>
+      </div>
+      <div class="status-card">
+        <strong>Time</strong>
+        <span id="timer">00</span>
+      </div>
+      <div class="status-card">
+        <strong>Round</strong>
+        <span id="roundCount">0</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="hint" id="hintText">Loading your first round...</div>
+      <div id="gameGrid" class="game-grid"></div>
+      <div class="controls">
+        <button id="restartButton" class="primary-button">Start / Restart</button>
+      </div>
+      <div class="message" id="messageText"></div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
