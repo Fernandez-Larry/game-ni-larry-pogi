@@ -3,44 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rush Tiles - Python Web Game</title>
+  <title>Game Ni Larry</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app-shell">
-    <header class="topbar">
-      <div>
-        <h1>Rush Tiles</h1>
-        <p class="tagline">Tap the target tiles. Fast, random, addictive.</p>
-      </div>
-      <div class="score-panel">
-        <div>Score <span id="score">0</span></div>
-        <div>High Score <span id="highScore">0</span></div>
-      </div>
-    </header>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-card">
+      <div class="loading-badge">Game Ni Larry</div>
+      <div class="loading-title">Adventure loading...</div>
+      <div class="loading-text" id="loadingMessage">HAHAHAHAHAHHA SABEL</div>
+    </div>
+  </div>
 
-    <section class="status-row">
-      <div class="status-card">
-        <strong id="targetLabel">Target:</strong>
-        <span id="targetSymbol">-</span>
+  <div class="toast hidden" id="toastMessage"></div>
+
+  <header class="navbar">
+    <div class="logo">Game Ni Larry</div>
+    <nav class="nav-links">
+      <button class="nav-button active" data-view="home">Home</button>
+      <button class="nav-button" data-view="games">Games</button>
+      <button class="nav-button" data-view="leaderboard">Live Leaderboard</button>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <section id="homeView" class="view active">
+      <div class="hero-panel">
+        <h1>Welcome to Game Ni Larry</h1>
+        <p>Fast, joyful games for kids and learners. Choose a challenge, hit a high score, and share the fun.</p>
+        <div class="hero-actions">
+          <button class="primary-button" data-view="games">Play Games</button>
+          <button class="secondary-button" data-view="leaderboard">View Leaderboard</button>
+        </div>
       </div>
-      <div class="status-card">
-        <strong>Time</strong>
-        <span id="timer">00</span>
-      </div>
-      <div class="status-card">
-        <strong>Round</strong>
-        <span id="roundCount">0</span>
+      <div class="home-grid">
+        <article class="feature-card">
+          <h2>Choose your challenge</h2>
+          <p>Pick a game mode and difficulty: slow, medium, fast, or impossible. Every round is different.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Live leaderboard</h2>
+          <p>See top scores right inside the app. Save your best rounds and climb the board.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Tap and learn</h2>
+          <p>Designed for phones, tablets, and laptops so kids anywhere can play without extra setup.</p>
+        </article>
       </div>
     </section>
 
-    <section class="panel">
-      <div class="hint" id="hintText">Loading your first round...</div>
-      <div id="gameGrid" class="game-grid"></div>
-      <div class="controls">
-        <button id="restartButton" class="primary-button">Start / Restart</button>
+    <section id="gamesView" class="view">
+      <div class="panel game-panel">
+        <div class="game-topbar">
+          <div class="subtab-group">
+            <button class="subtab active" data-game="tileSprint">Tile Sprint</button>
+            <button class="subtab" data-game="circleDash">Circle Dash</button>
+          </div>
+          <div class="difficulty-group">
+            <span>Difficulty</span>
+            <button class="difficulty-button active" data-difficulty="slow">Slow</button>
+            <button class="difficulty-button" data-difficulty="medium">Medium</button>
+            <button class="difficulty-button" data-difficulty="fast">Fast</button>
+            <button class="difficulty-button" data-difficulty="impossible">Impossible</button>
+          </div>
+        </div>
+
+        <div class="game-description" id="gameDescription"></div>
+        <div id="gameContainer" class="game-container"></div>
+
+        <div class="controls">
+          <button id="gameStartButton" class="primary-button">Start Game</button>
+          <button id="saveScoreButton" class="secondary-button hidden">Save Score</button>
+        </div>
+
+        <div class="score-row">
+          <div>Score <span id="score">0</span></div>
+          <div>High Score <span id="highScore">0</span></div>
+          <div>Time <span id="timer">00</span></div>
+        </div>
+
+        <div id="gameStatus" class="message">Pick a game and press Start.</div>
       </div>
-      <div class="message" id="messageText"></div>
+    </section>
+
+    <section id="leaderboardView" class="view">
+      <div class="panel leaderboard-panel">
+        <h2>Live Leaderboard</h2>
+        <p class="muted">This leaderboard shows the top rounds and your latest high scores.</p>
+        <div class="leaderboard-card">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>Score</th>
+                <th>Game</th>
+                <th>Difficulty</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+        </div>
+        <p id="leaderboardFooter" class="muted"></p>
+      </div>
     </section>
   </main>
 
