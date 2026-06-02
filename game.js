@@ -1,3 +1,5 @@
+// Educational game logic
+// Placeholder content replaced with new game logic
 const navButtons = document.querySelectorAll(".nav-button");
 const viewButtons = document.querySelectorAll("[data-view]");
 const gameTabs = document.querySelectorAll(".subtab");
@@ -12,458 +14,311 @@ const highScoreEl = document.getElementById("highScore");
 const timerEl = document.getElementById("timer");
 const leaderboardBody = document.getElementById("leaderboardBody");
 const leaderboardFooter = document.getElementById("leaderboardFooter");
-const loadingScreen = document.getElementById("loadingScreen");
-const loadingMessage = document.getElementById("loadingMessage");
-const toastMessage = document.getElementById("toastMessage");
+const soundButton = document.getElementById("soundButton");
 
 const views = document.querySelectorAll(".view");
 
-const difficultyValues = {
-  slow: 1.2,
-  medium: 3.5,
-  fast: 5.5,
-  impossible: 7.9,
+const state = {
+	view: "home",
+	currentGame: "letters",
+	difficulty: "slow",
+	score: 0,
+	highScore: 0,
+	timeLeft: 0,
+	timer: null,
+	isPlaying: false,
+	leaderboard: [],
+	audioEnabled: false,
 };
 
-const circleSettings = {
-  slow: { interval: 1200, size: 80, time: 35, points: 5 },
-  medium: { interval: 850, size: 60, time: 28, points: 10 },
-  fast: { interval: 550, size: 46, time: 22, points: 16 },
-  impossible: { interval: 360, size: 30, time: 16, points: 24 },
+const gameDefinitions = {
+	letters: {
+		title: "Letters",
+		description: "Hear the letter and tap the matching card.",
+		prompt: "Tap the letter shown.",
+		items: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").slice(0, 12),
+	},
+	numbers: {
+		title: "Numbers",
+		description: "Count and tap the correct number.",
+		prompt: "Tap the number shown.",
+		items: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+	},
+	shapes: {
+		title: "Shapes",
+		description: "Tap the matching shape and color.",
+		prompt: "Tap the shape shown.",
+		items: [
+			{ label: "Circle", color: "#ff6b6b" },
+			{ label: "Square", color: "#4da6ff" },
+			{ label: "Triangle", color: "#ffd24d" },
+			{ label: "Star", color: "#7ee2a7" },
+		],
+	},
+};
+
+const difficultySettings = {
+	slow: { count: 2, time: 24, style: "Slow" },
+	medium: { count: 3, time: 20, style: "Medium" },
+	fast: { count: 4, time: 16, style: "Fast" },
+	impossible: { count: 5, time: 12, style: "Impossible" },
 };
 
 const sampleScores = [
-  { name: "Aya", score: 2940, game: "Tile Sprint", difficulty: "Fast" },
-  { name: "Jun", score: 2780, game: "Circle Dash", difficulty: "Medium" },
-  { name: "Maya", score: 2330, game: "Tile Sprint", difficulty: "Impossible" },
+	{ name: "Mia", score: 12, game: "Letters", speed: "Slow" },
+	{ name: "Noah", score: 10, game: "Numbers", speed: "Medium" },
+	{ name: "Ava", score: 11, game: "Shapes", speed: "Fast" },
 ];
 
-const descriptions = {
-  tileSprint: "Find the target icon and avoid wrong tiles. Every round is randomized so the challenge stays fresh.",
-  circleDash: "Tap moving circles before time runs out. Faster difficulty makes the circles smaller and quicker.",
-};
-
-const state = {
-  view: "home",
-  currentGame: "tileSprint",
-  difficulty: "medium",
-  score: 0,
-  highScore: 0,
-  timeLeft: 0,
-  timer: null,
-  isPlaying: false,
-  activeRound: null,
-  tappedCount: 0,
-  circleSpawner: null,
-  circleElement: null,
-  leaderboard: [],
-  firstToast: false,
-};
-
 function loadHighScore() {
-  try {
-    const stored = localStorage.getItem("game-ni-larry-highscore");
-    state.highScore = stored ? parseInt(stored, 10) || 0 : 0;
-  } catch (error) {
-    state.highScore = 0;
-  }
-  highScoreEl.textContent = state.highScore;
+	try {
+		state.highScore = parseInt(localStorage.getItem("gnl-highscore"), 10) || 0;
+	} catch {
+		state.highScore = 0;
+	}
+	highScoreEl.textContent = state.highScore;
 }
 
 function saveHighScore() {
-  try {
-    localStorage.setItem("game-ni-larry-highscore", state.highScore.toString());
-  } catch (error) {
-    // ignore
-  }
+	localStorage.setItem("gnl-highscore", String(state.highScore));
 }
 
 function loadLeaderboard() {
-  try {
-    const stored = localStorage.getItem("game-ni-larry-leaderboard");
-    state.leaderboard = stored ? JSON.parse(stored) : [];
-  } catch (error) {
-    state.leaderboard = [];
-  }
+	try {
+		state.leaderboard = JSON.parse(localStorage.getItem("gnl-leaderboard")) || [];
+	} catch {
+		state.leaderboard = [];
+	}
 }
 
 function saveLeaderboard() {
-  try {
-    localStorage.setItem("game-ni-larry-leaderboard", JSON.stringify(state.leaderboard));
-  } catch (error) {
-    // ignore
-  }
+	localStorage.setItem("gnl-leaderboard", JSON.stringify(state.leaderboard));
 }
 
-function showView(viewName) {
-  state.view = viewName;
-  views.forEach((view) => view.classList.toggle("active", view.id === `${viewName}View`));
-  navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
-
-  if (viewName === "leaderboard") {
-    renderLeaderboard();
-  }
-
-  if (viewName === "games") {
-    renderGamePanel();
-  }
-}
-
-function showLoading(text, duration = 1200) {
-  loadingMessage.textContent = text;
-  loadingScreen.classList.remove("hidden");
-  setTimeout(() => {
-    loadingScreen.classList.add("hidden");
-  }, duration);
-}
-
-function showToast(text) {
-  toastMessage.textContent = text;
-  toastMessage.classList.add("visible");
-  setTimeout(() => toastMessage.classList.remove("visible"), 1800);
-}
-
-function setGameDescription() {
-  gameDescription.textContent = descriptions[state.currentGame];
-}
-
-function resetGameState() {
-  clearInterval(state.timer);
-  clearInterval(state.circleSpawner);
-  if (state.circleElement && state.circleElement.parentNode) {
-    state.circleElement.remove();
-  }
-  state.score = 0;
-  state.timeLeft = 0;
-  state.isPlaying = false;
-  state.activeRound = null;
-  state.tappedCount = 0;
-  state.circleElement = null;
-  state.circleSpawner = null;
-  updateHud();
-}
-
-function updateHud() {
-  scoreEl.textContent = state.score;
-  highScoreEl.textContent = state.highScore;
-  timerEl.textContent = String(state.timeLeft).padStart(2, "0");
+function setView(viewName) {
+	state.view = viewName;
+	views.forEach((view) => view.classList.toggle("active", view.id === `${viewName}View`));
+	navButtons.forEach((button) => button.classList.toggle("active", button.dataset.view === viewName));
+	if (viewName === "leaderboard") renderLeaderboard();
+	if (viewName === "games") renderGamePanel();
 }
 
 function setStatus(text, type = "normal") {
-  gameStatus.textContent = text;
-  gameStatus.style.color = type === "danger" ? "#ff8c8c" : type === "success" ? "#7ee2a7" : "var(--text)";
+	gameStatus.textContent = text;
+	gameStatus.style.color = type === "danger" ? "#ff8c8c" : type === "success" ? "#7ee2a7" : "var(--text)";
 }
 
-function setActiveTab() {
-  gameTabs.forEach((button) => button.classList.toggle("active", button.dataset.game === state.currentGame));
-  difficultyButtons.forEach((button) => button.classList.toggle("active", button.dataset.difficulty === state.difficulty));
+function resetGameState() {
+	clearInterval(state.timer);
+	state.score = 0;
+	state.timeLeft = 0;
+	state.isPlaying = false;
+	updateHud();
+}
+
+function updateHud() {
+	scoreEl.textContent = state.score;
+	highScoreEl.textContent = state.highScore;
+	timerEl.textContent = String(state.timeLeft).padStart(2, "0");
+}
+
+function speak(text) {
+	if (!state.audioEnabled || !window.speechSynthesis) return;
+	window.speechSynthesis.cancel();
+	const utterance = new SpeechSynthesisUtterance(text);
+	utterance.rate = 1.05;
+	utterance.pitch = 1.1;
+	window.speechSynthesis.speak(utterance);
 }
 
 function renderGamePanel() {
-  setGameDescription();
-  setActiveTab();
-  gameContainer.innerHTML = state.currentGame === "tileSprint" ? `<div class="game-grid" id="gameGrid"></div>` : `<div class="circle-arena" id="circleArena"></div>`;
-  gameStatus.textContent = "Pick a game and press Start.";
-  saveScoreButton.classList.add("hidden");
-  updateHud();
+	const game = gameDefinitions[state.currentGame];
+	gameDescription.textContent = game.description;
+	gameTabs.forEach((button) => button.classList.toggle("active", button.dataset.game === state.currentGame));
+	difficultyButtons.forEach((button) => button.classList.toggle("active", button.dataset.difficulty === state.difficulty));
+	gameContainer.innerHTML = `<div class="game-welcome"><h2>${game.title}</h2><p>${game.prompt}</p></div>`;
+	setStatus("Tap Start to begin the learning game.");
+	saveScoreButton.classList.add("hidden");
+	resetGameState();
 }
 
-async function fetchRound(difficulty) {
-  const params = new URLSearchParams({ difficulty: difficulty.toFixed(2) });
-  try {
-    const response = await fetch(`/api/new_round?${params}`);
-    if (response.ok) {
-      return response.json();
-    }
-    throw new Error("Bad response");
-  } catch (error) {
-    return createLocalRound(difficulty);
-  }
+function shuffle(array) {
+	const copy = [...array];
+	for (let i = copy.length - 1; i > 0; i -= 1) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[copy[i], copy[j]] = [copy[j], copy[i]];
+	}
+	return copy;
 }
 
-function createLocalRound(difficulty) {
-  const symbols = ["★", "●", "■", "▲", "♥", "✦"];
-  const colors = ["#ff4d4d", "#4d94ff", "#ffd24d", "#32c48d", "#cc5cff", "#ff7f3f"];
-  const targetSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-  const targetColor = colors[Math.floor(Math.random() * colors.length)];
-  const minTargets = 3;
-  const extraTargets = Math.max(0, Math.floor(difficulty - 1));
-  let targetCount = Math.min(6, minTargets + extraTargets + Math.floor(Math.random() * 3));
-  targetCount = Math.min(targetCount, 12);
-  const gridSize = 16;
-  const allPositions = Array.from({ length: gridSize }, (_, index) => index);
-  for (let i = allPositions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
-  }
-  const targetPositions = new Set(allPositions.slice(0, targetCount));
-  const tiles = [];
-
-  for (let index = 0; index < gridSize; index += 1) {
-    if (targetPositions.has(index)) {
-      tiles.push({ id: `tile-${index}`, symbol: targetSymbol, color: targetColor, isTarget: true });
-    } else {
-      const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      tiles.push({ id: `tile-${index}`, symbol, color, isTarget: symbol === targetSymbol && color === targetColor ? colors[(colors.indexOf(color) + 1) % colors.length] : color });
-    }
-  }
-
-  for (let i = tiles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
-  }
-
-  return {
-    roundId: Date.now(),
-    targetSymbol,
-    targetColor,
-    targetCount,
-    gridSize,
-    tiles,
-    timeLimit: Math.max(8, 18 - Math.round(difficulty * 1.5)),
-    pointsPerHit: Math.max(10, 15 + Math.round(difficulty * 2)),
-    hint: `Tap every ${targetSymbol} and fill the board fast!`,
-    difficulty,
-  };
+function createRound() {
+	const game = gameDefinitions[state.currentGame];
+	const difficulty = difficultySettings[state.difficulty];
+	const items = shuffle(game.items).slice(0, difficulty.count + 1);
+	const target = items[Math.floor(Math.random() * items.length)];
+	return { target, options: shuffle(items), time: difficulty.time };
 }
 
-function renderTileRound(round) {
-  const tileGrid = document.getElementById("gameGrid");
-  if (!tileGrid) return;
-  tileGrid.innerHTML = "";
-  state.activeRound = round;
-  state.tappedCount = 0;
+function renderRound(round) {
+	const game = gameDefinitions[state.currentGame];
+	state.timeLeft = round.time;
+	updateHud();
+	state.isPlaying = true;
+	gameContainer.innerHTML = `<div class="answer-grid"></div>`;
+	const answerGrid = gameContainer.querySelector(".answer-grid");
+	if (!answerGrid) return;
 
-  round.tiles.forEach((tile) => {
-    const button = document.createElement("button");
-    button.className = "tile";
-    button.dataset.target = tile.isTarget ? "true" : "false";
-    button.textContent = tile.symbol;
-    button.style.color = tile.color;
+	round.options.forEach((item) => {
+		const button = document.createElement("button");
+		button.className = "answer-button";
+		if (state.currentGame === "shapes") {
+			button.innerHTML = `
+				<div class="shape-card">
+					<div class="shape-icon" style="background:${item.color}; border-radius:${item.label === 'Square' ? '18px' : item.label === 'Circle' ? '50%' : item.label === 'Star' ? '20%' : '8px'};">${item.label === 'Star' ? '★' : ''}</div>
+					<div>${item.label}</div>
+				</div>`;
+			button.dataset.value = item.label;
+		} else {
+			button.textContent = item;
+			button.dataset.value = item;
+		}
+		button.addEventListener("click", () => handleAnswer(item, round.target));
+		answerGrid.appendChild(button);
+	});
 
-    button.addEventListener("click", () => {
-      if (!state.isPlaying || button.classList.contains("revealed")) {
-        return;
-      }
-      const isTarget = button.dataset.target === "true";
-      if (isTarget) {
-        button.classList.add("revealed");
-        button.style.filter = "brightness(0.7)";
-        state.tappedCount += 1;
-        state.score += round.pointsPerHit;
-        if (state.score > state.highScore) {
-          state.highScore = state.score;
-          saveHighScore();
-        }
-        updateHud();
-        setStatus("Great tap! Keep going.", "success");
-        if (state.tappedCount >= round.targetCount) {
-          finishGame("Well done! You cleared the round.");
-        }
-      } else {
-        button.classList.add("revealed");
-        button.style.background = "rgba(255, 127, 127, 0.35)";
-        finishGame("That was a wrong tile. Game over.");
-      }
-    });
-
-    tileGrid.appendChild(button);
-  });
+	const spokenTarget = state.currentGame === "shapes" ? `${round.target.label} ${round.target.color}` : round.target;
+	speak(`Tap the ${spokenTarget}`);
+	setStatus(`Tap the ${spokenTarget}`);
+	startTimer(round.time);
 }
 
-function startCircleGame() {
-  resetGameState();
-  state.isPlaying = true;
-  const config = circleSettings[state.difficulty];
-  state.timeLeft = config.time;
-  updateHud();
-  gameContainer.innerHTML = `<div class="circle-arena" id="circleArena"></div>`;
-  const circleArena = document.getElementById("circleArena");
-  if (!circleArena) return;
+function handleAnswer(selected, target) {
+	if (!state.isPlaying) return;
+	const correct = state.currentGame === "shapes"
+		? selected.label === target.label && selected.color === target.color
+		: selected === target;
 
-  function spawnCircle() {
-    if (!state.isPlaying) return;
-    if (state.circleElement && state.circleElement.parentNode) {
-      state.circleElement.remove();
-    }
-    const circle = document.createElement("button");
-    const diameter = config.size;
-    const maxX = Math.max(0, circleArena.clientWidth - diameter);
-    const maxY = Math.max(0, circleArena.clientHeight - diameter);
-    const x = Math.floor(Math.random() * (maxX + 1));
-    const y = Math.floor(Math.random() * (maxY + 1));
-
-    circle.className = "circle-item";
-    circle.style.width = `${diameter}px`;
-    circle.style.height = `${diameter}px`;
-    circle.style.left = `${x}px`;
-    circle.style.top = `${y}px`;
-    circle.style.background = `linear-gradient(135deg, ${state.difficulty === "impossible" ? "#ff5f7a" : "#5ec8ff"}, ${state.difficulty === "slow" ? "#ffd24d" : "#cc5cff"})`;
-    circle.textContent = "+";
-
-    circle.addEventListener("click", (event) => {
-      event.stopPropagation();
-      if (!state.isPlaying) return;
-      state.score += config.points;
-      if (state.score > state.highScore) {
-        state.highScore = state.score;
-        saveHighScore();
-      }
-      updateHud();
-      setStatus("Nice hit! Keep the tempo.", "success");
-      circle.remove();
-      state.circleElement = null;
-      spawnCircle();
-    });
-
-    circleArena.appendChild(circle);
-    state.circleElement = circle;
-  }
-
-  spawnCircle();
-  state.circleSpawner = setInterval(() => {
-    if (!state.isPlaying) return;
-    spawnCircle();
-  }, config.interval);
-
-  startTimer(config.time);
-  setStatus("Tap the circles fast!", "success");
+	if (correct) {
+		state.score += 1;
+		setStatus("Correct! Great job.", "success");
+		speak("Correct!");
+		nextRound();
+	} else {
+		setStatus("Try again!", "danger");
+		speak("Try again.");
+	}
+	updateHud();
 }
 
-function finishGame(message) {
-  state.isPlaying = false;
-  clearInterval(state.timer);
-  clearInterval(state.circleSpawner);
-  setStatus(message, "danger");
-  saveScoreButton.classList.remove("hidden");
+function nextRound() {
+	clearInterval(state.timer);
+	const round = createRound();
+	renderRound(round);
 }
 
 function startTimer(seconds) {
-  clearInterval(state.timer);
-  state.timeLeft = seconds;
-  updateHud();
-  state.timer = setInterval(() => {
-    state.timeLeft -= 1;
-    updateHud();
-    if (state.timeLeft <= 0) {
-      clearInterval(state.timer);
-      finishGame("Time's up! Great effort.");
-    }
-  }, 1000);
+	clearInterval(state.timer);
+	state.timeLeft = seconds;
+	updateHud();
+	state.timer = setInterval(() => {
+		state.timeLeft -= 1;
+		updateHud();
+		if (state.timeLeft <= 0) {
+			clearInterval(state.timer);
+			endGame();
+		}
+	}, 1000);
 }
 
-async function startTileSprint() {
-  resetGameState();
-  state.isPlaying = true;
-  setStatus("Loading the next challenge...");
-  const difficulty = difficultyValues[state.difficulty];
-  const round = await fetchRound(difficulty);
-  if (!round) {
-    setStatus("Unable to load the challenge. Please try again.", "danger");
-    return;
-  }
-  state.activeRound = round;
-  state.timeLeft = round.timeLimit;
-  renderTileRound(round);
-  startTimer(round.timeLimit);
-  setStatus("Tap only the target tiles!", "success");
-  saveScoreButton.classList.add("hidden");
+function endGame() {
+	state.isPlaying = false;
+	clearInterval(state.timer);
+	setStatus(`Time's up! You scored ${state.score}.`, "danger");
+	saveScoreButton.classList.remove("hidden");
+	if (state.score > state.highScore) {
+		state.highScore = state.score;
+		saveHighScore();
+	}
+	updateHud();
 }
 
 function startGame() {
-  if (state.currentGame === "tileSprint") {
-    startTileSprint();
-  } else {
-    startCircleGame();
-    saveScoreButton.classList.add("hidden");
-  }
+	if (state.isPlaying) return;
+	state.score = 0;
+	saveScoreButton.classList.add("hidden");
+	nextRound();
 }
 
 function renderLeaderboard() {
-  loadLeaderboard();
-  const combined = [...sampleScores, ...state.leaderboard];
-  combined.sort((a, b) => b.score - a.score);
-  const rows = combined.slice(0, 12).map((entry, index) => {
-    return `
-      <tr>
-        <td>${index + 1}</td>
-        <td>${entry.name}</td>
-        <td>${entry.score}</td>
-        <td>${entry.game}</td>
-        <td>${entry.difficulty}</td>
-      </tr>`;
-  });
-  leaderboardBody.innerHTML = rows.join("");
-  leaderboardFooter.textContent = `Showing the top ${Math.min(12, combined.length)} scores. Save your next round to add to the board.`;
+	loadLeaderboard();
+	const rows = [...sampleScores, ...state.leaderboard]
+		.sort((a, b) => b.score - a.score)
+		.slice(0, 12)
+		.map((item, index) => `
+			<tr>
+				<td>${index + 1}</td>
+				<td>${item.name}</td>
+				<td>${item.score}</td>
+				<td>${item.game}</td>
+				<td>${item.speed}</td>
+			</tr>`)
+		.join("");
+	leaderboardBody.innerHTML = rows;
+	leaderboardFooter.textContent = `Top ${Math.min(12, rows.length ? rows.length : 0)} scores from the learning app.`;
 }
 
-function saveCurrentScore() {
-  const playerName = prompt("Enter your name for the leaderboard", localStorage.getItem("game-ni-larry-player") || "Player").trim();
-  if (!playerName) {
-    setStatus("Name is required to save your score.", "danger");
-    return;
-  }
-
-  localStorage.setItem("game-ni-larry-player", playerName);
-  state.leaderboard.push({
-    name: playerName,
-    score: state.score,
-    game: state.currentGame === "tileSprint" ? "Tile Sprint" : "Circle Dash",
-    difficulty: state.difficulty.charAt(0).toUpperCase() + state.difficulty.slice(1),
-    date: Date.now(),
-  });
-  saveLeaderboard();
-  renderLeaderboard();
-  saveScoreButton.classList.add("hidden");
-  setStatus("Score saved! Check the leaderboard.", "success");
+function saveScore() {
+	const name = prompt("Enter a name to save this score", localStorage.getItem("gnl-player") || "Friend");
+	if (!name) return;
+	localStorage.setItem("gnl-player", name);
+	state.leaderboard.push({
+		name,
+		score: state.score,
+		game: gameDefinitions[state.currentGame].title,
+		speed: difficultySettings[state.difficulty].style,
+	});
+	saveLeaderboard();
+	renderLeaderboard();
+	saveScoreButton.classList.add("hidden");
+	setStatus("Score saved! Nice work.", "success");
 }
 
-viewButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const view = button.dataset.view;
-    if (view) {
-      showView(view);
-      showToast("HAHAHAHAHAHHA SABEL");
-    }
-  });
-});
+function enableAudio() {
+	state.audioEnabled = !state.audioEnabled;
+	soundButton.textContent = state.audioEnabled ? "Sound off" : "Play sound";
+	if (state.audioEnabled) {
+		speak("Sound is now on.");
+		setTimeout(() => {
+			soundButton.textContent = "Sound off";
+		}, 1200);
+	}
+}
 
 gameTabs.forEach((button) => {
-  button.addEventListener("click", () => {
-    state.currentGame = button.dataset.game;
-    renderGamePanel();
-    showToast(`Game mode switched to ${button.textContent}`);
-  });
+	button.addEventListener("click", () => {
+		state.currentGame = button.dataset.game;
+		renderGamePanel();
+	});
+});
+
+viewButtons.forEach((button) => {
+	button.addEventListener("click", () => setView(button.dataset.view));
 });
 
 difficultyButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    state.difficulty = button.dataset.difficulty;
-    setActiveTab();
-    setGameDescription();
-    showToast(`Difficulty set to ${button.textContent}`);
-  });
+	button.addEventListener("click", () => {
+		state.difficulty = button.dataset.difficulty;
+		renderGamePanel();
+	});
 });
 
-startButton.addEventListener("click", () => {
-  startGame();
-});
-
-saveScoreButton.addEventListener("click", () => {
-  saveCurrentScore();
-});
-
-document.body.addEventListener("click", () => {
-  if (!state.firstToast) {
-    showToast("HAHAHAHAHAHHA SABEL");
-    state.firstToast = true;
-  }
-});
+startButton.addEventListener("click", startGame);
+saveScoreButton.addEventListener("click", saveScore);
+soundButton.addEventListener("click", enableAudio);
 
 window.addEventListener("load", () => {
-  loadHighScore();
-  loadLeaderboard();
-  renderGamePanel();
-  showLoading("HAHAHAHAHAHHA SABEL", 1200);
+	loadHighScore();
+	loadLeaderboard();
+	renderGamePanel();
+	setView("home");
 });

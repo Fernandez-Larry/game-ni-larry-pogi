@@ -7,47 +7,38 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="loading-screen" id="loadingScreen">
-    <div class="loading-card">
-      <div class="loading-badge">Game Ni Larry</div>
-      <div class="loading-title">Adventure loading...</div>
-      <div class="loading-text" id="loadingMessage">HAHAHAHAHAHHA SABEL</div>
-    </div>
-  </div>
-
-  <div class="toast hidden" id="toastMessage"></div>
-
   <header class="navbar">
     <div class="logo">Game Ni Larry</div>
     <nav class="nav-links">
       <button class="nav-button active" data-view="home">Home</button>
       <button class="nav-button" data-view="games">Games</button>
-      <button class="nav-button" data-view="leaderboard">Live Leaderboard</button>
+      <button class="nav-button" data-view="leaderboard">Leaderboard</button>
     </nav>
   </header>
 
   <main class="app-shell">
     <section id="homeView" class="view active">
       <div class="hero-panel">
-        <h1>Welcome to Game Ni Larry</h1>
-        <p>Fast, joyful games for kids and learners. Choose a challenge, hit a high score, and share the fun.</p>
+        <h1>Welcome, little learners!</h1>
+        <p>Learn letters, numbers, shapes, and colors with friendly games made for children ages 1-5.</p>
         <div class="hero-actions">
-          <button class="primary-button" data-view="games">Play Games</button>
-          <button class="secondary-button" data-view="leaderboard">View Leaderboard</button>
+          <button class="primary-button" data-view="games">Start Playing</button>
+          <button class="secondary-button" data-view="leaderboard">View Scores</button>
         </div>
       </div>
+
       <div class="home-grid">
         <article class="feature-card">
-          <h2>Choose your challenge</h2>
-          <p>Pick a game mode and difficulty: slow, medium, fast, or impossible. Every round is different.</p>
+          <h2>Letters</h2>
+          <p>Tap the matching letter and hear it aloud.</p>
         </article>
         <article class="feature-card">
-          <h2>Live leaderboard</h2>
-          <p>See top scores right inside the app. Save your best rounds and climb the board.</p>
+          <h2>Numbers</h2>
+          <p>Count along and choose the right number.</p>
         </article>
         <article class="feature-card">
-          <h2>Tap and learn</h2>
-          <p>Designed for phones, tablets, and laptops so kids anywhere can play without extra setup.</p>
+          <h2>Shapes</h2>
+          <p>Learn shapes and colors with bright, easy touches.</p>
         </article>
       </div>
     </section>
@@ -56,11 +47,12 @@
       <div class="panel game-panel">
         <div class="game-topbar">
           <div class="subtab-group">
-            <button class="subtab active" data-game="tileSprint">Tile Sprint</button>
-            <button class="subtab" data-game="circleDash">Circle Dash</button>
+            <button class="subtab active" data-game="letters">Letters</button>
+            <button class="subtab" data-game="numbers">Numbers</button>
+            <button class="subtab" data-game="shapes">Shapes</button>
           </div>
           <div class="difficulty-group">
-            <span>Difficulty</span>
+            <span>Speed</span>
             <button class="difficulty-button active" data-difficulty="slow">Slow</button>
             <button class="difficulty-button" data-difficulty="medium">Medium</button>
             <button class="difficulty-button" data-difficulty="fast">Fast</button>
@@ -78,18 +70,18 @@
 
         <div class="score-row">
           <div>Score <span id="score">0</span></div>
-          <div>High Score <span id="highScore">0</span></div>
+          <div>Best <span id="highScore">0</span></div>
           <div>Time <span id="timer">00</span></div>
         </div>
 
-        <div id="gameStatus" class="message">Pick a game and press Start.</div>
+        <div id="gameStatus" class="message">Tap Start to begin the learning game.</div>
       </div>
     </section>
 
     <section id="leaderboardView" class="view">
       <div class="panel leaderboard-panel">
-        <h2>Live Leaderboard</h2>
-        <p class="muted">This leaderboard shows the top rounds and your latest high scores.</p>
+        <h2>Leaderboard</h2>
+        <p class="muted">Save your rounds and see the best learners.</p>
         <div class="leaderboard-card">
           <table class="leaderboard-table">
             <thead>
@@ -98,7 +90,7 @@
                 <th>Player</th>
                 <th>Score</th>
                 <th>Game</th>
-                <th>Difficulty</th>
+                <th>Speed</th>
               </tr>
             </thead>
             <tbody id="leaderboardBody"></tbody>
@@ -109,6 +101,7 @@
     </section>
   </main>
 
+  <button id="soundButton" class="sound-button">Play sound</button>
   <script src="game.js"></script>
 </body>
 </html>

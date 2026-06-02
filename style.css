@@ -52,7 +52,7 @@ body {
 
 .logo {
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   font-size: clamp(1.1rem, 2vw, 1.4rem);
 }
 
@@ -65,31 +65,27 @@ body {
 .nav-button,
 .subtab,
 .difficulty-button,
-.secondary-button {
+.secondary-button,
+.primary-button {
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.05);
   color: var(--text);
   border-radius: 999px;
-  padding: 10px 18px;
-  font-size: 0.95rem;
+  padding: 12px 20px;
+  font-size: 0.96rem;
   cursor: pointer;
   transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
 .nav-button.active,
 .subtab.active,
-.difficulty-button.active {
+.difficulty-button.active,
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
   background: linear-gradient(135deg, var(--accent), #49b4ff);
   border-color: rgba(94,200,255,0.35);
   color: #09121c;
-}
-
-.nav-button:hover,
-.subtab:hover,
-.difficulty-button:hover,
-.secondary-button:hover {
-  transform: translateY(-1px);
-  background: rgba(255,255,255,0.08);
 }
 
 .app-shell {
@@ -109,11 +105,11 @@ body {
 
 .hero-panel,
 .panel {
-  background: var(--panel);
+  background: rgba(13, 22, 37, 0.98);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 28px;
   padding: 26px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
 }
 
 .hero-panel h1,
@@ -127,7 +123,7 @@ body {
 .message,
 .muted {
   color: var(--muted);
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .hero-actions,
@@ -144,8 +140,7 @@ body {
   margin: 20px 0;
 }
 
-.hero-grid {
-  margin-top: 10px;
+.home-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
@@ -153,24 +148,25 @@ body {
 
 .feature-card {
   flex-direction: column;
-  background: var(--panel-2);
+  background: rgba(14, 25, 43, 0.98);
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 22px;
-  padding: 18px;
+  border-radius: 24px;
+  padding: 22px;
 }
 
 .feature-card h2 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: var(--text);
 }
 
 .game-panel {
+  display: flex;
+  flex-direction: column;
   gap: 18px;
 }
 
 .game-topbar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
@@ -192,65 +188,63 @@ body {
 .game-description {
   margin-bottom: 18px;
   color: var(--accent);
+  font-size: 1rem;
 }
 
 .game-container {
-  min-height: 280px;
-}
-
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.tile {
-  aspect-ratio: 1 / 1;
-  display: grid;
-  place-items: center;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-  color: var(--text);
-  transition: transform 120ms ease, filter 120ms ease, border-color 120ms ease;
-  cursor: pointer;
-  user-select: none;
-}
-
-.tile:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.05);
-}
-
-.tile.revealed {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.circle-arena {
-  position: relative;
-  min-height: 280px;
-  border-radius: 26px;
-  background: rgba(255,255,255,0.04);
+  min-height: 320px;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.03);
   border: 1px dashed rgba(255,255,255,0.12);
-  overflow: hidden;
+  padding: 24px;
+  display: grid;
+  align-items: center;
+  justify-items: center;
 }
 
-.circle-item {
-  position: absolute;
-  border-radius: 50%;
+.answer-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.answer-button {
+  min-height: 110px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  color: var(--text);
   cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
   display: grid;
   place-items: center;
+}
+
+.answer-button:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.12);
+}
+
+.shape-card {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: grid;
+  place-items: center;
+}
+
+.shape-icon {
+  width: 84px;
+  height: 84px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #09121c;
   font-weight: 700;
-  transition: transform 80ms ease;
-}
-
-.circle-item:hover {
-  transform: scale(1.02);
 }
 
 .score-row {
@@ -258,6 +252,101 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.score-row div,
+.leaderboard-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.leaderboard-panel h2 {
+  margin-top: 0;
+}
+
+.leaderboard-card {
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.leaderboard-table th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.leaderboard-table tr:nth-child(even) {
+  background: rgba(255,255,255,0.03);
+}
+
+.sound-button {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100;
+  border: none;
+  border-radius: 999px;
+  padding: 16px 22px;
+  cursor: pointer;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff, #d4f4ff);
+  color: #09121c;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.24);
+}
+
+.message {
+  margin-top: 14px;
+  min-height: 28px;
+}
+
+@media (max-width: 760px) {
+  body {
+    padding: 10px;
+  }
+
+  .navbar,
+  .app-shell {
+    width: 100%;
+  }
+
+  .home-grid,
+  .score-row,
+  .game-topbar,
+  .hero-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .game-topbar,
+  .subtab-group,
+  .difficulty-group,
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .answer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-button,
+  .subtab,
+  .difficulty-button,
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
 }
 
 .score-row div,

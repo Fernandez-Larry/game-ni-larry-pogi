@@ -37,3 +37,20 @@ The Python function is automatically detected under `api/new_round.py`.
 - No extra Python packages are required.
 - The game stores the high score locally in your browser.
 - The experience is responsive for desktop and mobile screens.
+
+## Automatic Git push on commit (optional)
+
+This repository includes a versioned Git hook at `.githooks/post-commit` that, when enabled, will attempt to push the current branch to the `origin` remote after every commit.
+
+To enable the hook, from the repository root run (PowerShell):
+
+```powershell
+./scripts/setup-hooks.ps1
+```
+
+Requirements and safety notes:
+- You must have a remote named `origin` configured and push permissions to that remote.
+- Ensure your credentials are available (SSH key or Git credential helper).
+- If a push fails, details are appended to `.git/hooks/push-errors.log`.
+- If you prefer not to auto-push, do not enable the hook or unset `core.hooksPath` with `git config --unset core.hooksPath`.
+
