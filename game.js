@@ -21,7 +21,7 @@ const views = document.querySelectorAll(".view");
 const state = {
 	view: "home",
 	currentGame: "letters",
-	difficulty: "slow",
+	difficulty: "easy",
 	score: 0,
 	highScore: 0,
 	timeLeft: 0,
@@ -58,16 +58,15 @@ const gameDefinitions = {
 };
 
 const difficultySettings = {
-	slow: { count: 2, time: 24, style: "Slow" },
+	easy: { count: 2, time: 24, style: "Easy" },
 	medium: { count: 3, time: 20, style: "Medium" },
-	fast: { count: 4, time: 16, style: "Fast" },
-	impossible: { count: 5, time: 12, style: "Impossible" },
+	hard: { count: 4, time: 16, style: "Hard" },
 };
 
 const sampleScores = [
-	{ name: "Mia", score: 12, game: "Letters", speed: "Slow" },
+	{ name: "Mia", score: 12, game: "Letters", speed: "Easy" },
 	{ name: "Noah", score: 10, game: "Numbers", speed: "Medium" },
-	{ name: "Ava", score: 11, game: "Shapes", speed: "Fast" },
+	{ name: "Ava", score: 11, game: "Shapes", speed: "Hard" },
 ];
 
 function loadHighScore() {
@@ -188,13 +187,18 @@ function renderRound(round) {
 	round.options.forEach((item, idx) => {
 		const el = document.createElement('div');
 		el.className = 'floating-item';
-		// color choices for variation
+		// plain, big letters/numbers/shapes with no nested containers
 		const palette = ['#ffec99','#ffd6a5','#caffbf','#9bf6ff','#ffd6e0','#bdb2ff'];
-		el.style.background = palette[idx % palette.length];
 		if (state.currentGame === 'shapes') {
-			el.innerHTML = `<div style="width:48px; height:48px; display:grid; place-items:center; border-radius:${item.label === 'Square' ? '8px' : item.label === 'Circle' ? '50%' : item.label === 'Star' ? '20%' : '6px'}; background:${item.color};">${item.label === 'Star' ? '★' : ''}</div>`;
+			el.style.background = item.color;
+			el.style.borderRadius = item.label === 'Square' ? '12px' : item.label === 'Circle' ? '50%' : item.label === 'Star' ? '20%' : '8px';
+			el.style.fontSize = '2.4rem';
+			el.textContent = item.label === 'Star' ? '★' : item.label.charAt(0).toUpperCase();
 			el.dataset.value = JSON.stringify(item);
 		} else {
+			el.style.background = palette[idx % palette.length];
+			el.style.borderRadius = '12px';
+			el.style.fontSize = '2.2rem';
 			el.textContent = String(item);
 			el.dataset.value = JSON.stringify(item);
 		}

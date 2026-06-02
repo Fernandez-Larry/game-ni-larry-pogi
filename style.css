@@ -221,13 +221,12 @@ body {
 
 .floating-item {
   position: absolute;
-  min-width: 64px;
-  min-height: 64px;
-  padding: 12px 16px;
-  border-radius: 999px;
-  display: inline-grid;
+  min-width: 80px;
+  min-height: 80px;
+  padding: 16px;
+  border-radius: 12px;
+  display: grid;
   place-items: center;
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
   color: #09121c;
   font-weight: 700;
   cursor: grab;
